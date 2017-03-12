@@ -1,0 +1,591 @@
+The following are general information and guides for:
+    
+    - What is in the brew system
+    - Building and flashing new code for the Arduino Due board
+    - Building and flashing new code for the Diablo16 Display board
+    - Alternate (Mantis) code
+         - Mantis protocol
+
+Note that all version numbers referenced are as of this writing and are
+generally "latest", which is to say - you may find newer versions available
+which may or may not work.  
+
+==========================
+YOU MUST READ THIS PART
+==========================
+
+Any/all instructions carry no warranty or liability, anything and everything you do 
+related to your sculpture and modifications thereof you do at the risk of irreversibly 
+breaking your sculpture.  As these notes refer to electronic components, all care should 
+be taken to avoid electric shock or hazard, and expert advice should be sought.  The short 
+version of all this is:
+
+    - If you hurt yourself or anyone else, its your fault 
+    
+    - If you break or damange your sculpture or components, its your fault
+    
+UNDER NO CIRCUMSTANCE WILL YOU HOLD ANYONE ELSE LIABLE FOR ANYTHING RELATED TO THIS DOCUMENT,
+CODE BASE, OR INSTRUCTIONS.  
+
+==========================
+Mantis Code License
+==========================
+
+All code in the mantis repository is subject to the following license:
+
+
+  Copyright (c) 2016, Nate Yocom (nate@yocom.org)
+  All rights reserved.
+ 
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+ 
+  1. Redistributions of source code must retain the above copyright notice, this
+     list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+ 
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    
+==========================    
+What Is In The Brew System
+==========================
+
+The essence of the control panel for the MoreBeer digital brew sculpture is a
+combination of:
+
+    Arduino Due (Main Board) - https://www.arduino.cc/en/Main/ArduinoBoardDue
+    Custom PCB (I/O Board)
+    uLCD-70DT Diablo16 Intelligent Display - http://www.4dsystems.com.au/product/uLCD_70DT/
+
+The Arduino board contains code for automation and driving the actual brew day, through
+control and access to:
+
+    One Wire digital temperature sensors for HLT, Mash and Kettle
+    A/C relay's driven by I/O board for Pump1 and Pump2
+    Display interaction via Serial connection (Serial2)
+    Kettle burner via I/O board
+    
+The display runs its own chip, with code in flash and data from a MicroSD card.  The
+arduino code receives messages/events through the serial connection.  All logic is 
+contained in the arduino code.
+
+=============================
+Building and Flashing Ardunio
+=============================
+
+You will need: 
+
+    Ardunio IDE - https://www.arduino.cc/en/Main/Software - (1.6.9)
+    USB connection and drivers - See https://www.arduino.cc/en/Guide/ArduinoDue
+    Ardunio libraries (Sketch -> Include Library -> Manage Libraries)
+        - genieArdunio (20151006.0.0) - https://github.com/4dsystems/ViSi-Genie-Arduino-Library
+        - ArduinoJson (5.5.0)
+        - DueFlashStorage (1.0.0)
+        - MAX31850 DallasTemperature (1.0.0)
+        - MAX31850 OneWire (1.0.0)
+        
+The main .ino fail will match the name of its containing folder, and should open in the IDE.
+
+Once open, follow the instructions at https://www.arduino.cc/en/Guide/ArduinoDue for Uploading
+Code to the Due.
+
+===============================
+Building and Flashing uLCD-70DT
+===============================
+
+Display/UI changes will require flashing code to the uLCD-70DT and data to its MicroSD card.
+
+You will need:
+
+    Workshop4 IDE - http://www.4dsystems.com.au/product/4D_Workshop_4_IDE/ (free version)
+    A MicroSD card reader/writer for your computer
+    USB cable and USB->Serial adapter.  See adapter here: https://www.sparkfun.com/products/11814
+    
+I recommend setting the maximum string size in the Workshop4 IDE to 2048, this is required for
+mantis builds - see screenshot-workshop4-settings.png.
+
+To push, place the MicroSD card from the screen in your computer, and attach to the screen's serial
+connection via USB (you will have to remove the I/O -> screen cable) and use Workshop4 to build + upload.
+     
+===========================
+Alternate / Mantis Revision
+===========================
+
+Mantis is the pet name of a project undertaken by Nate Yocom with his Sculpture.  The goal of 
+mantis is to:
+
+    - Create a simple on-board/out-of-the box UI for automation of a brew day to the same 
+        level of automation as previous versions of the sculpture (basic temperature control
+        and pump control).
+        
+    - Add wireless capability such that the sculpture can:
+        - Operate as it's own AP and/or join an existing wireless network
+        - Be monitored or controlled by an Application running on a seperate device (i.e. phone,
+          tablet, computer, etc) on the same network
+    
+    - Create a library for interacting with the brew sculpture
+    
+    - Create a desktop / mobile application for automation and brew sculpture control, including:
+        - Recording a brew day / recipe for later "replay"
+        - System calibration and testing
+        - Automated brew day from an imported Beer XML recipe
+        
+To do this, the mantis code, in the 'mantis' directory, contains a complete ground-up re-written
+UI and arduino code base, including support for the ESP8266 wireless chip.  The code will work
+without the wireless chip as well, but the payoff is really in including this chip as well.  
+
+I used this chip: https://www.sparkfun.com/products/13678 - though as the enclosure is very good 
+at blocking signal, I suggest looking for a version of this which has or allows an external antennea.
+
+To build/use this code, I suggest first adding the ESP8266 hardware by:
+
+    - Open the console
+    - Detach all wires from the I/O board and remove it from the case
+    - Note the 5 open solder points on the I/O board labeled "Wifi Module" - you will need to 
+      connect the ESP8266 to this set of points somehow.  I used jumper cable and soldered on
+      a female header.  See the pin listing in docs/esp8266/esp8266modulev1.pdf and attach to
+      the I/O board's pins 0-4 (left to right, aligned to printing) as:
+      
+        ESP8266 Pin         I/O Pin
+            1                  0           
+            2                  3
+            7                  2
+            8                  4
+      
+      Then connect ESP8266 Pins 4 and 6 to each other.
+      
+      When initially developing this, I did first remove the I/O board and directly connected
+      the ESP8266 to the Due board using the pinout described here: https://www.youtube.com/watch?v=EDdF-E6kIDo,
+      see screengrab in esp8266/pins-direct-to-due.png.  I don't think this is required, but FYI :).
+
+Depending on date of manufacture, source, and phase of the moon (seriously, not sure why) the ESP8266
+you get may be set with a baud rate of 9600, 5700, or 115200.  The mantis code base requires it to be 
+at 9600.  This sounds slow, but the speed at which we can drain things from its serial output is limited
+by the Due's clock speed, and 9600 is plently slow so as to prevent overflow and lost data.  Also, this is
+roughly 32k a second, plenty for our purposes!  Before using the mantis code base, you can first build/push
+the program from mantis/tools/wificomm.  This small program allows you to use the Serial monitor to interact 
+with the ESP8266 directly.  Here you can use the full AT command set, including the following to change the 
+baud rate to 9600:
+
+    AT+UART_DEF=9600,8,1,0,0
+
+To find the baud rate your chip is currently at, edit the wificomm source and change the baud rate that 
+is used for Serial3 until an "AT" or "AT+GMR" command comes back looking reasonable.  Then use the above 
+command to force the chip to 9600.
+
+With the ESP8266 attached and configured at the correct rate, you can then build/push the "mantis" code base.
+
+Once running the Mantis code base, the screen will present a switch which turns on Wireless mode.  The
+UI otherwise allows for managing an automated brew in the same way previous brew sculptures did, i.e.
+through setting a target HLT and Mash tun temperature, and managing the variable which drives the second
+pump (Temperature, Mash Float, or Always On).
+
+For the record, AT+GMR on my ESP8266 returns:
+
+    AT version:0.40.0.0(Aug  8 2015 14:45:58)
+    SDK version:1.3.0
+    Ai-Thinker Technology Co.,Ltd.
+    Build:1.3.0.2 Sep 11 2015 11:48:04
+
+--------------------------------------------- Mantis Protocol -----------------------------------------
+
+All communication is disabled unless the Wireless switch is on.   
+
+When in wireless mode, the system will send data as UDP broadcast messages to port 12982 (default). All
+messages are JSON encoded and have the following common fields:
+
+    "ID"                - The mac address of the system
+    "MessageType"       - A unique description of the message as a string
+    "Version"           - A protocol version number, currently always 1 
+    
+The following are the message types the sculpture will send:
+
+    MessageType         Description
+    ===========         ===========
+        "State"         Sent once every 30s by default, this message describes the current state of the brewery
+        "SSIDs"         Sent in response to a request, this lists the Wifi Access Points visible,
+                            their signal string (as -dbm) and the encryption type.
+     "Settings"         Sent in response to a request, provides the current configuration of the system.
+         "Pong"         Sent in response to a Ping
+      "Goodbye"         Sent when wireless is being disabled
+      "AllInfo"         Sent when requested, includes full state dump, config info, and list of visible SSIDs                           
+              
+    
+Messages which the sculpture can process are also expected to be JSON encoded.  All commands carry the
+following common fields:    
+
+    "MessageType"       - "ControlMessage"
+    "ControlId"         - Number indicating the action to take, see table below
+    "Target"            - Either "*" for all sculptures, or the "ID" of the intended system
+    "Data"              - The data for the message, if applicable
+    
+The following are supported ControlId commands processed by the sculpture:
+
+    ControlId           Description                                     Data
+    ===========         ===========                                     ====================
+              0         Sets the mash target temperature                Float
+              1         Sets the hlt target temperature                 Float
+              2         Sets the state of pump 1                        Bool
+              3         Sets the mode for pump 2                        Int - 0, 1, 2, 3 - Off, Temp, Float, On
+              4         Sets the state of the burner                    Bool
+              6         Sets the remote control state                   Bool
+              8         Adds status text to the UI                      String
+              9         Requests an immediate state broadcast           ---
+             10         Ping - requests a pong                          ---
+             11         Sets the current brewer name                    String
+             12         Sets the state of pump 2                        Bool
+            129         Requests a list of SSIDs visible to the chip    ---
+            130         Sets the SSID to join                           String
+            131         Sets the SSID pass to use                       String
+            132         Reset and reconnect the network connection      ---
+            133         Reset and forget SSID (AP mode)                 ---
+            134         Save current settings                           ---
+            135         Provide remote configuration blob               String (Embedded JSON)
+            136         Get current configurations                      ---
+            137         Set state of brewery                            String (Embedded JSON)
+            138         Get all - State / Config / SSIDs                ---
+                               
+A complete description of each message follows:    
+
+----- MessageType: State -----
+  
+    { 
+        MessageType: "State",       /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */
+        IP: "10.0.1.143",           /* Current IP address */
+        TS: 5912,                   /* Timestamp as milliseconds since boot */
+        CurrentState: {
+            HT: 125.3,                  /* Float - Current temperature of HLT */
+            HTT: 150.0,                 /* Float - Current HLT target */
+            MT: 125.3,                  /* Float - Current temperature of MT */
+            MTT: 150.0,                 /* Float - Current target for MT */
+            KT: 201.0,                  /* Float - Current Kettle temperature */
+            MF: false,                  /* Bool - State of mash float (true = up) */
+            HF: false,                  /* Bool - State of HLT float (true = up) */
+            P1: true,                   /* Bool - State of Pump 1 (true = on) */
+            P2: true,                   /* Bool - State of Pump 2 (true = on) */
+            B: true,                    /* Bool - State of burner *relay* (not flame) - true = on */
+            P2M: 2,                     /* Int - Mode for pump automation - { 0, 1, 2, 3 } => { Off, Temp, Float, On } */
+            RC: true,                   /* Bool - State of remote control mode */
+        }
+    }
+
+----- MessageType: SSIDs -----
+
+    { 
+        MessageType: "SSIDs",       /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */
+        Nets: [                     /* Array of Net objects */
+        {
+            Name: "Fooziw",         /* SSID Name */
+            RSSI: -69,              /* Signal strength in -dBm */
+            Encryption: "WEP"       /* Type of encryption as string: { WEP, WPA_PSK, WPA2_PSK, WPA_WPA2_PSK, None }
+        }]
+    }
+
+----- MessageType: Goodbye -----
+
+    { 
+        MessageType: "Goodbye",       /* Message Type */
+        ID: "00:00:00:00:00:00"       /* Brewery ID (mac address) */        
+    }
+
+----- MessageType: Settings -----
+
+    { 
+        MessageType: "Settings",    /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */
+        Data:                       /* Nested settings object */
+        {
+            ssid: "name",           /* Name of SSID to Join */
+            pass: "password",       /* Password for SSID, only provided on same network as SSID, not internal AP netwrok */
+            brewer: "breweryname",  /* Custom brewer name */
+            portnum: 12982,         /* Port number for bcast listen/send */
+            remote: "{}",           /* Embedded JSON for remote settings storage */
+        }
+    }
+        
+----- MessageType: StatusTxt -----
+
+    { 
+        MessageType: "StatusTxt",   /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */
+        Data: "Some message here!"  /* Display text */         
+    }    
+    
+----- MessageType: Pong -----
+
+    { 
+        MessageType: "Pong",        /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */                 
+    }
+
+----- MessageType: AllInfo -----
+  
+    { 
+        MessageType: "AllInfo",     /* Message Type */
+        ID: "00:00:00:00:00:00",    /* Brewery ID (mac address) */
+        IP: "10.0.1.143",           /* Current IP address */
+        TS: 5912,                   /* Timestamp as milliseconds since boot */
+        State: "",                  /* Embedded json of State message */
+        Config: "",                 /* Embedded json Settings message */
+        SSIDs: "",                  /* Embedded json SSIDs message */        
+    }    
+    
+----- ControlMessage: 1 (Set HLT Temp) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 1,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: 127.0,                    /* Float - Target temperature */                 
+    }
+    
+----- ControlMessage: 2 (Set Pump 1 State) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 2,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: true,                     /* Bool - Pump state (true = on) */                 
+    }
+
+----- ControlMessage: 3 (Set Pump 2 State) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 3,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: true,                     /* Bool - Pump state (true = on) */                 
+    }
+
+----- ControlMessage: 4 (Set Burner State) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 4,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: true,                     /* Bool - Burner relay state (true = on) */                 
+    }
+    
+    NOTE: The Arduino code has a safety which ensures the burner relay is only on if the HLT float is
+            also in the UP position, to prevent dry firing in combination with the hardware safety for 
+            ensuring the pilot is lit.  
+
+----- ControlMessage: 6 (Set Remote Control) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 6,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: true,                     /* Bool - Remote control state (true = on) */                 
+    }
+    
+    NOTE: When RemoteControl state is ON, the built in Automation is disabled.  This means that Pump 2
+            and the burner are expected to be fully controlled via the network.  The only built in 
+            control active is the safety to prevent dry firing the burner.  Likewise, all UI operation
+            on the system becomes read-only - with the exception of the Wireless switch which can be used
+            to disable wireless (and deactivate remote control).
+             
+----- ControlMessage: 8 (Status Text) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 8,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: "Message to display",     /* String - message to display in the UI - Keep this < 512 chars */                 
+    }
+    
+----- ControlMessage: 9 (Broadcast Request) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 9,                   /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                         
+    }
+    
+    NOTE: When recieved, the target system will immediately issue a broadcast "State" message.  Generally
+    this shouldn't be necessary, as the system broadcasts regularly.  However, it may be a useful strategy
+    to set the broadcast rate LOW (high delay) and request updates if network issues arise.
+
+----- ControlMessage: 10 (Ping) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 10,                  /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                         
+    }
+    
+    NOTE: When recieved, the target system will immediately issue a broadcast "Pong" message. Useful
+    for discovery.
+                                          
+----- ControlMessage: 11 (Set current brewer) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 11,                  /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: "Brewer Name Here"        /* New custom brewer string */                         
+    }
+    
+    NOTE: When recieved, the target system will immediately issue a broadcast "State" message.  Generally
+    this shouldn't be necessary, as the system broadcasts regularly.  However, it may be a useful strategy
+    to set the broadcast rate LOW (high delay) and request updates if network issues arise.
+
+----- ControlMessage: 12 (Set Pump 2 State) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 12,                  /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: true                      /* Bool - State of pump 2 (true = on) */                         
+    }
+
+    NOTE: This is distinct from setting pump 2 *mode* in that it directly sets the state (on/off) of the
+    relay, as opposed to the strategy the on-board automation should use for driving the relay.  The on
+    board relay logic will 'win' if there is conflict.  If direct management of this pump is desired, you
+    should turn on Remote Control mode (see Message 6) instead.
+
+
+----- ControlMessage: 129 (Request SSID List) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 129,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                         
+    }
+    
+    NOTE: When received, the target system will immediately broadcast an "SSIDs" message.
+    
+----- ControlMessage: 130 (Set SSID Name) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 130,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: "ssidnamehere"            /* Name of SSID to join */                         
+    }
+    
+    NOTE: This does not imply connection to the SSID unless Message 132 is sent afterward, or 
+    settings are saved (Message 134) and system is restarted.
+    
+----- ControlMessage: 131 (Set SSID Password) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 131,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        Data: "passwordhere"            /* Password to use when joining SSID */                         
+    }
+    
+    NOTE: This does not imply connection to the SSID unless Message 132 is sent afterward, or 
+    settings are saved (Message 134) and system is restarted.
+    
+----- ControlMessage: 132 (Reconnect network) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 132,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                                 
+    }
+                     
+    NOTE: This will reconnect with saved SSID/Password, or if 130/131 have been sent it will use
+    those values.  The values sent in 130/131 are not saved unless explicitly sent a 134 or pressing
+    the save button in the settings screen.                     
+                                     
+
+----- ControlMessage: 133 (Reconnect network - Restore to Default) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 133,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                                 
+    }
+
+    NOTE: This will restore the default network settings - i.e. AP only mode, as well as reconnect.
+
+----- ControlMessage: 134 (Save Current Settings) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 134,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */                                 
+    }
+    
+----- ControlMessage: 135 (Push Settings) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 135,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        
+        /* String - Embedded JSON to store as settings */
+        Data: "{ ssid: 'name', pass: 'pass', brewer: 'brewername', portnum: 12982, remote: '{}' }",                                                 
+    }
+    
+    NOTE: The data for this message is a fully formed but embedded JSON string which will be 
+    stored directly to device flash memory and used by the device for settings.  See "Settings"
+    message from the device for form.
+
+----- ControlMessage: 136 (Get Settings) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 136,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+    }
+    
+    NOTE: Upon receipt, the target device will broadcast a "Settings" message.    
+
+----- ControlMessage: 137 (Set State) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 137,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */
+        /* String - Embedded JSON */
+        Data: ""
+    }
+
+    NOTE: This message may be preferrable to the individual 'set burner' etc messages, as you
+    can specify the comprehensive state desired in a single message.  The embedded JSON should
+    describe the state of the brewery with the same fields as the "State" message type sent out
+    by the brewery, i.e.:
+
+        { 
+            HTT: 127,       /* Float - HLT target temp */
+            MTT: 132,       /* Float - MT target temp */
+            P1: true,       /* Bool - Pump 1 state, on = true */
+            P2: true,       /* Bool - Pump 2 state, on = true */
+            B: false,       /* Bool - Burner state, on = true */
+            RC: true,       /* Bool - Remote control mode */
+            P2M: 2,         /* Int - Pump 2 AutoBrew mode (only applies for !RC) */
+        }                                    
+
+----- ControlMessage: 138 (Get All) -----
+    
+    { 
+        MessageType: "ControlMessage",  /* Message Type */
+        ControlId: 138,                 /* Control ID */
+        Target: "00:00:00:00:00:00",    /* Target Brewery ID (mac address), or "*" for all */        
+    }
+
+    Requests the brewery to respond with an AllInfo message.
+
+
+----------------------------------------- Connecting / Configuring ------------------------------------- 
+
+When switched on, the board will default to presenting itself as an open access point named "morebeer",
+which any network client can join.  Once joined, the device can be directly managed/controlled, or configured
+to reconnect on a different network (shared) via the messages documented above.            
